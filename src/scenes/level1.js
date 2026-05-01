@@ -130,6 +130,21 @@ export function registerLevel1Scene() {
     // ---- Camila ----
     const camila = makeCamila(spawn.x, spawn.y - 1)
 
+    // Visible "scoop ready" indicator that floats above Camila's hat whenever
+    // she has the ice-cream power. Empty otherwise.
+    const scoopHint = add([
+      sprite('ice-cream', { width: 14, height: 18 }),
+      pos(camila.pos.x, camila.pos.y - 80),
+      anchor('center'),
+      opacity(0),
+      z(50),
+    ])
+    onUpdate(() => {
+      scoopHint.pos.x = camila.pos.x
+      scoopHint.pos.y = camila.pos.y - (camila.state === 'tall' ? 96 : 80)
+      scoopHint.opacity = canScoop ? 1 : 0
+    })
+
     // ---- HUD ----
     mountHUD({
       levelName: 'WORLD 1-1: KITCHEN ROAD',
@@ -149,7 +164,21 @@ export function registerLevel1Scene() {
     onKeyPress('space',    queueJump)
     onKeyPress('up',       queueJump)
     onKeyPress('w',        queueJump)
+    // Throw key — bind several so the player has alternates if their browser
+    // intercepts one. Kaplay's onKeyPress + a direct window listener both
+    // route to queueScoop, so even if the engine's input layer drops a press
+    // the DOM listener catches it.
     onKeyPress('z',        queueScoop)
+    onKeyPress('c',        queueScoop)
+    onKeyPress('shift',    queueScoop)
+    const domThrowHandler = (e) => {
+      if (e.key === 'z' || e.key === 'Z' || e.key === 'c' || e.key === 'C' ||
+          e.code === 'KeyZ' || e.code === 'KeyC' || e.key === 'Shift') {
+        queueScoop()
+      }
+    }
+    window.addEventListener('keydown', domThrowHandler)
+    onSceneLeave(() => window.removeEventListener('keydown', domThrowHandler))
 
     // ---- Per-frame: input → Camila ----
     camila.onUpdate(() => {
@@ -163,7 +192,9 @@ export function registerLevel1Scene() {
         camila.jump(JUMP_FORCE)
         play('jump')
       }
-      if (consumeScoop() && canScoop) {
+      const wantScoop = consumeScoop()
+      if (wantScoop) console.log('[scoop] press detected; canScoop =', canScoop)
+      if (wantScoop && canScoop) {
         const now = time() * 1000
         if (now - lastScoopAt > SCOOP_COOLDOWN_MS) {
           lastScoopAt = now
