@@ -25,7 +25,7 @@ export const TILE_FRAMES = {
   DIRT_BODY_A:      40,
   DIRT_BODY_B:      41,
   DIRT_BODY_C:      42,
-  BRICK_BLOCK:      30,   // brown wooden block — used for floating platforms
+  BRICK_BLOCK:       6,   // plain brown brick — used for floating platforms
   HEART:            44,
   COIN:            151,
   GEM:              67,
