@@ -48,7 +48,7 @@ export function registerMenuScene() {
     ])
 
     add([
-      text('Arrows + Space to play. X to throw ice cream.', { size: 16 }),
+      text('Arrows + Space to play. Z to throw ice cream.', { size: 16 }),
       pos(width() / 2, height() - 40),
       anchor('center'),
       color(220, 220, 220),

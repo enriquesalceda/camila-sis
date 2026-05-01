@@ -74,7 +74,7 @@ saying what it does in plain English. Try these to start:
 | --- | --- |
 | ← / → (or A / D) | Walk |
 | Space (or ↑ / W) | Jump |
-| X | Throw an ice cream scoop (after eating an 🍦) |
+| Z | Throw an ice cream scoop (after eating an 🍦) |
 
 On a touch device (iPad), four buttons appear over the canvas:
 left, right, jump, and (after eating ice cream) a 🍦 throw button.

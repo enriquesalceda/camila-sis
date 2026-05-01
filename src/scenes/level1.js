@@ -147,7 +147,7 @@ export function registerLevel1Scene() {
     onKeyPress('space', queueJump)
     onKeyPress('up',    queueJump)
     onKeyPress('w',     queueJump)
-    onKeyPress('x',     queueScoop)
+    onKeyPress('z',     queueScoop)
 
     // ---- Per-frame: input → Camila ----
     camila.onUpdate(() => {

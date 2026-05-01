@@ -1,5 +1,5 @@
 ## Context
-I'm starting a vibe-coding project with my 8-year-old daughter Camila:
+I'm starting a vibe-coding project with my 10-year-old daughter Camila:
 a 2D platformer that's a loving homage to Super Mario Bros, starring her.
 I'm a senior engineer (Go/AWS background) but new to game dev. She'll
 demo this in her class on an iPad via a public URL. Read CLAUDE.md
