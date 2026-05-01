@@ -1,53 +1,25 @@
-// Camila herself. We draw her from rectangles and one face photo so it's
-// easy to tweak her costume — change the colors below to repaint her apron,
-// hat, or legs without touching anything else.
+// Camila — pixel-art chef body sprite plus the face PNG composited on top of
+// the head region. Physics, state machine, and helper methods are unchanged
+// from v0.1; the only thing that's different is what gets drawn.
 
 import {
   CAMILA_SMALL_HEIGHT, CAMILA_TALL_HEIGHT,
   RUN_SPEED, JUMP_FORCE,
-  INVULN_MS, POWERUP_FLASH_MS, WALK_FRAME_MS,
+  INVULN_MS, POWERUP_FLASH_MS,
 } from '../config.js'
 
-// Body proportions for small vs tall. Everything is in pixels relative to
-// Camila's feet (which is local 0,0 because we anchor the parent at "bot").
-function bodyShape(state) {
-  if (state === 'tall') {
-    return {
-      h: CAMILA_TALL_HEIGHT, w: 28,
-      faceSize: 28, hatW: 26, hatH: 8,
-      apronW: 24, apronH: 26, apronOffsetY: 32,
-      stripeW: 14, stripeOffsetY: 42,
-      legW: 6, legH: 10,
-    }
-  }
-  return {
-    h: CAMILA_SMALL_HEIGHT, w: 24,
-    faceSize: 24, hatW: 22, hatH: 6,
-    apronW: 20, apronH: 18, apronOffsetY: 24,
-    stripeW: 10, stripeOffsetY: 32,
-    legW: 6, legH: 8,
-  }
-}
+// Body width matches both the sprite and the collision box. Native sprite is
+// 16 wide so we render at scale 2 to land on a clean 32 px collision box.
+const BODY_WIDTH = 32
+// Face PNG overlay size + offset within the body, in object-local coords
+// (anchor 'bot', so y=0 is at feet, y goes negative upward).
+const FACE_SIZE = 22
+const FACE_Y_SMALL = -32
+const FACE_Y_TALL  = -50
 
 export function makeCamila(x, y) {
-  // Kaplay's `rgb` global only exists after the engine boots, which is why
-  // these are inside the factory and not at module top.
-  const HAT_COLOR    = rgb(255, 255, 255)
-  const APRON_COLOR  = rgb(240, 240, 235)
-  const STRIPE_COLOR = rgb(220, 40, 40)
-  const LEG_COLOR    = rgb(80, 50, 30)
-  const OUTLINE_COL  = rgb(40, 40, 40)
-
-  const startBody = bodyShape('small')
-
-  // Use a rect() as the body shape and let Kaplay derive the collision area
-  // from it. This makes anchor('bot') line up cleanly: pos.y is her feet,
-  // and the rect renders straight up from there. Custom area shapes paired
-  // with a manual anchor offset gave us an off-by-one-body-height bug.
   const c = add([
-    rect(startBody.w, startBody.h),
-    color(240, 240, 235),                // apron base color, overdrawn below
-    outline(2, rgb(40, 40, 40)),
+    sprite('camila-small', { width: BODY_WIDTH, height: CAMILA_SMALL_HEIGHT }),
     pos(x, y),
     area(),
     body(),
@@ -62,17 +34,18 @@ export function makeCamila(x, y) {
       invuln: false,
       frozen: false,
       dancing: false,
-      _legPhase: 0,
-      _legAccum: 0,
       _danceAccum: 0,
       _danceFrame: 0,
     },
   ])
+  c.play('idle')
 
-  function applyShape() {
-    const b = bodyShape(c.state)
-    c.width = b.w
-    c.height = b.h
+  function bodySprite() {
+    return c.state === 'tall' ? 'camila-tall-body' : 'camila-small'
+  }
+
+  function bodyHeight() {
+    return c.state === 'tall' ? CAMILA_TALL_HEIGHT : CAMILA_SMALL_HEIGHT
   }
 
   c.setState = (next) => {
@@ -80,7 +53,10 @@ export function makeCamila(x, y) {
     if (next === 'tall')      c.face = 'tall'
     else if (next === 'dead') c.face = 'dead'
     else                      c.face = 'normal'
-    applyShape()
+    if (next !== 'dead') {
+      c.use(sprite(bodySprite(), { width: BODY_WIDTH, height: bodyHeight() }))
+      c.play(Math.abs(c.vel.x) > 1 ? 'walk' : 'idle')
+    }
   }
 
   c.flashPowerUp = (onDone) => {
@@ -96,7 +72,6 @@ export function makeCamila(x, y) {
     })
   }
 
-  // Brief invulnerability after a hit — flicker the whole player.
   c.startInvuln = () => {
     c.invuln = true
     let elapsed = 0
@@ -116,7 +91,7 @@ export function makeCamila(x, y) {
     c.frozen = true
   }
 
-  // Walk-cycle leg swap and dance frame counter live in onUpdate.
+  // Walk animation tracking + dance frame counter.
   c.onUpdate(() => {
     if (c.dancing) {
       c._danceAccum += dt() * 1000
@@ -125,75 +100,30 @@ export function makeCamila(x, y) {
         c._danceFrame = (c._danceFrame + 1) % 4
       }
     }
-    if (Math.abs(c.vel.x) > 1 && c.isGrounded()) {
-      c._legAccum += dt() * 1000
-      if (c._legAccum >= WALK_FRAME_MS) {
-        c._legAccum = 0
-        c._legPhase = 1 - c._legPhase
-      }
-    } else {
-      c._legPhase = 0
+    // Sync walk anim with grounded movement.
+    if (c.state !== 'dead') {
+      const moving = Math.abs(c.vel.x) > 5 && c.isGrounded()
+      if (moving && c.curAnim() !== 'walk') c.play('walk')
+      else if (!moving && c.curAnim() === 'walk') { c.stop(); c.frame = 0 }
     }
+    // Mirror sprite when facing left.
+    c.flipX = c.facing < 0
   })
 
-  // Custom drawing — hat, apron, legs, face.
+  // Face PNG overlay — drawn on top of the body sprite each frame, snapped
+  // to the head region of whichever body sprite is current.
   c.onDraw(() => {
-    const b = bodyShape(c.state)
-
-    // The apron body is rendered by the rect() component on the parent.
-    // We just paint legs, stripe, face, and hat on top of it here.
-
-    // Legs (skip when dead so the death pose looks limp).
-    if (c.state !== 'dead') {
-      const liftL = c._legPhase === 0 ? 0 : -2
-      const liftR = c._legPhase === 1 ? 0 : -2
-      drawRect({ pos: vec2(-b.w / 2 + 2,          -b.legH + liftL), width: b.legW, height: b.legH - liftL, color: LEG_COLOR })
-      drawRect({ pos: vec2( b.w / 2 - 2 - b.legW, -b.legH + liftR), width: b.legW, height: b.legH - liftR, color: LEG_COLOR })
-    }
-
-    // Apron stripe
-    drawRect({
-      pos: vec2(-b.stripeW / 2, -b.h + b.stripeOffsetY),
-      width: b.stripeW, height: 3,
-      color: STRIPE_COLOR,
-    })
-
-    // Face photo
+    const yOffset = c.state === 'tall' ? FACE_Y_TALL : FACE_Y_SMALL
     const danceBob = c.dancing ? (c._danceFrame % 2 === 0 ? -2 : 2) : 0
     drawSprite({
       sprite: 'camila-' + c.face,
-      pos: vec2(0, -b.h + 2 + danceBob),
-      width: b.faceSize,
-      height: b.faceSize,
-      anchor: 'top',
+      pos: vec2(0, yOffset + danceBob),
+      width: FACE_SIZE, height: FACE_SIZE,
+      anchor: 'center',
       flipX: c.facing < 0,
     })
-
-    // Chef hat (drawn last so it sits on top of the face).
-    drawRect({
-      pos: vec2(-b.hatW / 2, -b.h - b.hatH + 2 + danceBob),
-      width: b.hatW, height: b.hatH,
-      color: HAT_COLOR,
-      outline: { width: 2, color: OUTLINE_COL },
-    })
-    // Hat puff
-    drawCircle({
-      pos: vec2(0, -b.h - b.hatH + danceBob),
-      radius: b.hatH * 0.9,
-      color: HAT_COLOR,
-      outline: { width: 2, color: OUTLINE_COL },
-    })
-
-    // Dance arms — only during the win dance.
-    if (c.dancing) {
-      const armUp = c._danceFrame % 2 === 0
-      const armY = armUp ? -b.h + 8 : -b.h + 18
-      drawRect({ pos: vec2(-b.w / 2 - 6, armY), width: 5, height: 16, color: APRON_COLOR })
-      drawRect({ pos: vec2( b.w / 2 + 1, armY), width: 5, height: 16, color: APRON_COLOR })
-    }
   })
 
-  // Apply a manual horizontal velocity each frame from the level scene.
   c.driveX = (dir) => {
     if (c.frozen) { c.vel.x = 0; return }
     if (dir !== 0) c.facing = dir
@@ -202,9 +132,7 @@ export function makeCamila(x, y) {
 
   c.tryJump = () => {
     if (c.frozen) return
-    if (c.isGrounded()) {
-      c.jump(JUMP_FORCE)
-    }
+    if (c.isGrounded()) c.jump(JUMP_FORCE)
   }
 
   return c

@@ -29,3 +29,6 @@ export const INSECT_STUN_MS      = 5000  // how long the insect stays stunned be
 
 // ---------- Lives ----------
 export const LIVES_AT_START      = 3     // how many tries Camila gets before Game Over.
+
+// ---------- Camera ----------
+export const DEAD_ZONE           = 80    // how many pixels Camila can move from screen-center before the camera follows her.

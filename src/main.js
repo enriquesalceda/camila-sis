@@ -24,6 +24,7 @@ kaplay({
   pixelDensity: 1,
   touchToMouse: false,
   debug: false,
+  crisp: true,                         // nearest-neighbor upscale for pixel-art
 })
 
 setGravity(GRAVITY)

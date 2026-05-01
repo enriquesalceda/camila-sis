@@ -15,7 +15,12 @@
         -webkit-tap-highlight-color: transparent;
         font-family: -apple-system, system-ui, sans-serif;
       }
-      #game { display: block; width: 100vw; height: 100vh; }
+      #game {
+        display: block; width: 100vw; height: 100vh;
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+      }
 
       /* Touch overlay — only shown on touch devices (set by src/touch.js). */
       #touch { position: fixed; inset: 0; pointer-events: none; display: none; }

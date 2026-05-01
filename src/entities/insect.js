@@ -1,20 +1,13 @@
-// Insect enemy. Three states:
-//   walking — same as a notebook
-//   stunned — sits in place after one stomp; touch from the side to kick
-//   kicked  — slides fast, defeats other enemies, bounces off walls
-//
-// On Camila's side, level1.js handles the player-vs-insect collision and
-// flips state via setStunned / setKicked.
+// Insect enemy. Three states: walking (anim) / stunned (single frame) /
+// kicked (single frame). Sprite-based — colors come from src/art/insect.js.
 
 import { ENEMY_WALK_SPEED, INSECT_KICK_SPEED, INSECT_STUN_MS, TILE } from '../config.js'
 
 export function makeInsect(x, y) {
-  const w = 26
-  const h = 22
+  const w = TILE - 4
+  const h = TILE - 8
   const e = add([
-    rect(w, h),
-    color(120, 180, 80),
-    outline(2, rgb(40, 80, 30)),
+    sprite('insect', { width: w, height: h }),
     pos(x, y),
     anchor('bot'),
     area(),
@@ -24,25 +17,27 @@ export function makeInsect(x, y) {
     {
       dir: -1,
       kind: 'insect',
-      state: 'walking',          // 'walking' | 'stunned' | 'kicked'
+      state: 'walking',
       stunTimer: 0,
       setStunned() {
         this.state = 'stunned'
         this.stunTimer = INSECT_STUN_MS / 1000
-        this.color = rgb(160, 200, 110)
+        this.stop(); this.frame = 2  // 'stunned' frame
       },
       setKicked(dirFromPlayer) {
         this.state = 'kicked'
         this.dir = dirFromPlayer >= 0 ? 1 : -1
-        this.color = rgb(80, 200, 130)
+        this.stop(); this.frame = 3  // 'kicked' frame
         this.use('kicked-shell')
       },
     },
   ])
+  e.play('walk')
 
   e.onUpdate(() => {
     if (e.state === 'walking') {
       e.move(e.dir * ENEMY_WALK_SPEED, 0)
+      e.flipX = e.dir < 0
       const probeX = e.pos.x + e.dir * (w / 2 + 2)
       const probeY = e.pos.y + 4
       const groundAhead = get('solid').some((g) => {
@@ -56,7 +51,7 @@ export function makeInsect(x, y) {
       e.stunTimer -= dt()
       if (e.stunTimer <= 0) {
         e.state = 'walking'
-        e.color = rgb(120, 180, 80)
+        e.play('walk')
       }
     } else if (e.state === 'kicked') {
       e.move(e.dir * INSECT_KICK_SPEED, 0)
@@ -65,10 +60,7 @@ export function makeInsect(x, y) {
 
   e.onCollide('solid', (other, col) => {
     if (!col) return
-    if (e.state === 'walking') {
-      if (col.isLeft())  e.dir = 1
-      if (col.isRight()) e.dir = -1
-    } else if (e.state === 'kicked') {
+    if (e.state === 'walking' || e.state === 'kicked') {
       if (col.isLeft())  e.dir = 1
       if (col.isRight()) e.dir = -1
     }

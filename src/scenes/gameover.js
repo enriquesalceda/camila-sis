@@ -3,14 +3,14 @@ export function registerGameOverScene() {
     setGravity(0)
     add([ rect(width(), height()), color(0, 0, 0), pos(0, 0), fixed(), z(-100) ])
     add([
-      text('GAME OVER', { size: 80 }),
+      text('GAME OVER', { font: 'press', size: 40 }),
       pos(width() / 2, height() / 2 - 40),
       anchor('center'),
       color(220, 30, 30),
       fixed(),
     ])
     add([
-      text('Press Space to Restart', { size: 28 }),
+      text('Press Space to Restart', { font: 'press', size: 14 }),
       pos(width() / 2, height() / 2 + 50),
       anchor('center'),
       color(255, 255, 255),

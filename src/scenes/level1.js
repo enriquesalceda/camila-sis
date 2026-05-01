@@ -1,15 +1,12 @@
 // Gameplay scene. This file owns:
 //   - building the level from the ASCII map
-//   - reading the player's input each frame and driving Camila
+//   - reading the player's input and driving Camila
 //   - all collision rules between Camila and the world
-//   - the camera follow
-//   - the lives counter and the win/lose transitions
-//
-// Most of the *numbers* live in src/config.js. Most of the *visuals* live
-// in src/entities/*.js. This scene is the glue that wires them together.
+//   - the camera follow (dead-zone)
+//   - HUD + lives/nugget counters and the win/lose transitions
 
 import {
-  GRAVITY, TILE, JUMP_FORCE, SCOOP_COOLDOWN_MS, LIVES_AT_START,
+  GRAVITY, TILE, JUMP_FORCE, SCOOP_COOLDOWN_MS, LIVES_AT_START, DEAD_ZONE,
 } from '../config.js'
 import {
   input, consumeJump, consumeScoop, resetInput,
@@ -22,11 +19,22 @@ import { makeInsect } from '../entities/insect.js'
 import { makeScoop } from '../entities/scoop.js'
 import { play } from '../sounds.js'
 import { setScoopVisible } from '../touch.js'
+import { TILE_FRAMES } from '../loader.js'
+import { spawnParallax } from '../parallax.js'
+import { makeDeadZoneCamera } from '../camera.js'
+import { mountHUD } from '../hud.js'
+
+// Pseudo-random tile picker so the floor doesn't repeat the same tile across.
+function pick(opts, x, y) {
+  const h = (x * 73856093) ^ (y * 19349663)
+  return opts[((h % opts.length) + opts.length) % opts.length]
+}
 
 export function registerLevel1Scene() {
   scene('level1', (arg) => {
     const startingLives = (arg && arg.lives) ?? LIVES_AT_START
     let livesLeft = startingLives
+    let nuggetCount = 0
     let lastScoopAt = -Infinity
     let won = false
     let dying = false
@@ -35,119 +43,109 @@ export function registerLevel1Scene() {
     resetInput()
     setScoopVisible(false)
 
-    // ---- World makers (called by parseLevel for each ASCII glyph) ----
+    // ---- World makers ----
 
-    const groundColor   = rgb(160, 100, 60)
-    const platformColor = rgb(110, 180, 90)
-
-    const makeBlock = (x, y, col) => add([
-      rect(TILE, TILE),
-      color(col),
-      outline(2, rgb(40, 30, 20)),
-      pos(x, y),
-      area(),
-      body({ isStatic: true }),
-      'solid',
-    ])
+    // Track which (col, row) cells already have ground so we can pick
+    // grass-top tiles only where there's empty sky directly above.
+    const groundCells = new Set()
+    const cellKey = (x, y) => `${x}|${y}`
 
     const makers = {
-      ground:   (x, y) => makeBlock(x, y, groundColor),
-      platform: (x, y) => makeBlock(x, y, platformColor),
-      nugget: (x, y) => add([
-        rect(18, 14),
-        color(220, 170, 90),
-        outline(2, rgb(120, 60, 20)),
+      ground: (x, y) => {
+        groundCells.add(cellKey(x, y))
+        const aboveHasGround = groundCells.has(cellKey(x, y - TILE))
+        const frame = aboveHasGround
+          ? pick([TILE_FRAMES.DIRT_BODY_A, TILE_FRAMES.DIRT_BODY_B, TILE_FRAMES.DIRT_BODY_C], x, y)
+          : TILE_FRAMES.GRASS_TOP_MID
+        return add([
+          sprite('tiles', { frame, width: TILE, height: TILE }),
+          pos(x, y),
+          area(),
+          body({ isStatic: true }),
+          'solid',
+        ])
+      },
+      platform: (x, y) => add([
+        sprite('tiles', { frame: TILE_FRAMES.BRICK_BLOCK, width: TILE, height: TILE }),
         pos(x, y),
-        anchor('center'),
         area(),
-        'nugget',
+        body({ isStatic: true }),
+        'solid',
       ]),
+      nugget: (x, y) => {
+        const e = add([
+          sprite('nugget', { width: 24, height: 18 }),
+          pos(x, y),
+          anchor('center'),
+          area(),
+          'nugget',
+          { _baseY: y, _t: Math.random() * Math.PI * 2 },
+        ])
+        e.onUpdate(() => { e._t += dt() * 4; e.pos.y = e._baseY + Math.sin(e._t) * 2 })
+        return e
+      },
       iceCream: (x, y) => {
-        // Cone (triangle approximated with a small rect) under a scoop circle.
-        const e = add([ pos(x, y), anchor('center'), area({ shape: new Rect(vec2(-8, -12), 16, 24) }), 'icecream' ])
-        e.onDraw(() => {
-          drawTriangle({
-            p1: vec2(-8, 0), p2: vec2(8, 0), p3: vec2(0, 12),
-            color: rgb(200, 150, 90),
-            outline: { width: 2, color: rgb(110, 70, 30) },
-          })
-          drawCircle({
-            pos: vec2(0, -2),
-            radius: 8,
-            color: rgb(255, 220, 235),
-            outline: { width: 2, color: rgb(180, 80, 120) },
-          })
-        })
+        const e = add([
+          sprite('ice-cream', { width: 20, height: 28 }),
+          pos(x, y),
+          anchor('center'),
+          area(),
+          'icecream',
+          { _baseY: y, _t: 0 },
+        ])
+        e.onUpdate(() => { e._t += dt() * 4; e.pos.y = e._baseY + Math.sin(e._t) * 2 })
         return e
       },
       notebook: makeNotebook,
       insect:   makeInsect,
       flag: (x, y) => {
-        // Flag pole with a triangle at the top.
-        const pole = add([
-          rect(4, TILE * 4),
-          color(230, 230, 230),
-          outline(2, rgb(60, 60, 60)),
+        // Pole + flag combined into one sprite. The sprite is anchored at
+        // the bottom of the pole; the visible flag rectangle sticks out the top.
+        return add([
+          sprite('flag', { width: 48, height: TILE * 5 }),
           pos(x, y),
           anchor('bot'),
-          area(),
+          area({ shape: new Rect(vec2(0, 0), 48, TILE * 5) }),
           'flag',
-        ])
-        const top = pole.pos.y - TILE * 4
-        add([
-          pos(x + 2, top + 6),
-          z(2),
-          {
-            draw() {
-              drawTriangle({
-                p1: vec2(0, 0),
-                p2: vec2(28, 8),
-                p3: vec2(0, 16),
-                color: rgb(220, 30, 30),
-                outline: { width: 2, color: rgb(80, 10, 10) },
-              })
-            },
-          },
-        ])
-        return pole
+          'flag-pole',
+        ]).play('wave')
       },
     }
 
     // Pin the bottom row of the ASCII map to the bottom of the camera.
     const rows = LEVEL_1.split('\n').length
     const offsetY = height() - rows * TILE
-    const { spawn, levelWidth, levelHeight } = parseLevel(LEVEL_1, makers, { offsetY })
+    const { spawn, levelWidth } = parseLevel(LEVEL_1, makers, { offsetY })
 
-    // Hidden killzone below the visible camera so falling off counts as death.
+    // Hidden killzone below the visible camera.
     const killzoneY = height() + 200
+
+    // ---- Parallax background ----
+    spawnParallax({ levelWidth })
 
     // ---- Camila ----
     const camila = makeCamila(spawn.x, spawn.y - 1)
 
     // ---- HUD ----
-    const livesLabel = add([
-      text(`${livesLeft}UP`, { size: 28 }),
-      pos(width() - 90, 16),
-      fixed(),
-      z(100),
-      color(255, 255, 255),
-      outline(3, rgb(20, 20, 20)),
-    ])
-    function refreshLives() { livesLabel.text = `${livesLeft}UP` }
+    mountHUD({
+      levelName: 'WORLD 1-1: KITCHEN ROAD',
+      getNuggets: () => nuggetCount,
+      getLives:   () => livesLeft,
+    })
 
     // ---- Keyboard input ----
-    onKeyPress('left',  pressLeft)
-    onKeyRelease('left',  releaseLeft)
-    onKeyPress('right', pressRight)
-    onKeyRelease('right', releaseRight)
-    onKeyPress('a',     pressLeft)
-    onKeyRelease('a',     releaseLeft)
-    onKeyPress('d',     pressRight)
-    onKeyRelease('d',     releaseRight)
-    onKeyPress('space', queueJump)
-    onKeyPress('up',    queueJump)
-    onKeyPress('w',     queueJump)
-    onKeyPress('z',     queueScoop)
+    onKeyPress('left',     pressLeft)
+    onKeyRelease('left',   releaseLeft)
+    onKeyPress('right',    pressRight)
+    onKeyRelease('right',  releaseRight)
+    onKeyPress('a',        pressLeft)
+    onKeyRelease('a',      releaseLeft)
+    onKeyPress('d',        pressRight)
+    onKeyRelease('d',      releaseRight)
+    onKeyPress('space',    queueJump)
+    onKeyPress('up',       queueJump)
+    onKeyPress('w',        queueJump)
+    onKeyPress('z',        queueScoop)
 
     // ---- Per-frame: input → Camila ----
     camila.onUpdate(() => {
@@ -157,11 +155,9 @@ export function registerLevel1Scene() {
       }
       const dx = (input.left ? -1 : 0) + (input.right ? 1 : 0)
       camila.driveX(dx)
-      if (consumeJump()) {
-        if (camila.isGrounded()) {
-          camila.jump(JUMP_FORCE)
-          play('jump')
-        }
+      if (consumeJump() && camila.isGrounded()) {
+        camila.jump(JUMP_FORCE)
+        play('jump')
       }
       if (consumeScoop() && camila.hasScoop) {
         const now = time() * 1000
@@ -174,13 +170,9 @@ export function registerLevel1Scene() {
       }
     })
 
-    // ---- Camera follow with end-of-level clamp ----
-    onUpdate(() => {
-      const halfW = width() / 2
-      const halfH = height() / 2
-      const camX = Math.min(Math.max(camila.pos.x, halfW), Math.max(halfW, levelWidth - halfW))
-      camPos(camX, halfH)
-    })
+    // ---- Camera dead-zone follow ----
+    const cam = makeDeadZoneCamera({ target: camila, levelWidth, deadZone: DEAD_ZONE })
+    onUpdate(() => cam.update())
 
     // ---- Death by falling off the world ----
     onUpdate(() => {
@@ -190,6 +182,7 @@ export function registerLevel1Scene() {
     // ---- Pickups ----
     onCollide('player', 'nugget', (p, n) => {
       destroy(n)
+      nuggetCount += 1
       play('coin')
       if (p.state === 'small') {
         play('powerup')
@@ -216,39 +209,28 @@ export function registerLevel1Scene() {
     onCollide('player', 'enemy', (p, e) => {
       if (won || dying || p.invuln) return
 
-      // A "kicked shell" hurts on contact regardless of direction.
       const isShell = e.is && e.is('kicked-shell')
       const isStunned = e.kind === 'insect' && e.state === 'stunned'
 
-      // Touching a stunned insect kicks it.
       if (isStunned) {
         const dirAway = p.pos.x < e.pos.x ? 1 : -1
         e.setKicked(dirAway)
         play('stomp')
-        // Small bounce so we don't immediately re-collide.
         p.vel.y = -JUMP_FORCE * 0.3
         return
       }
 
-      // Stomp check: falling fast enough = stomp.
       const stomped = !isShell && p.vel.y > 50
       if (stomped) {
-        if (e.kind === 'notebook') {
-          destroy(e)
-          play('stomp')
-        } else if (e.kind === 'insect') {
-          e.setStunned()
-          play('stomp')
-        }
+        if (e.kind === 'notebook') { destroy(e); play('stomp') }
+        else if (e.kind === 'insect') { e.setStunned(); play('stomp') }
         p.vel.y = -JUMP_FORCE * 0.55
         return
       }
 
-      // Side-hit — Camila takes damage.
       damagePlayer(p)
     })
 
-    // Kicked-shell sweeps through other enemies.
     onCollide('kicked-shell', 'enemy', (shell, target) => {
       if (target === shell) return
       if (target.is && target.is('kicked-shell')) return
@@ -278,16 +260,13 @@ export function registerLevel1Scene() {
       camila.setState('dead')
       camila.vel.x = 0
       camila.vel.y = -480
-      // Drop collisions so she falls through the floor and off-screen.
       camila.unuse('area')
       play('death')
 
-      // Watch for off-screen, then either respawn or game-over.
       const watcher = onUpdate(() => {
         if (camila.pos.y > height() + 220) {
           watcher.cancel()
           livesLeft -= 1
-          refreshLives()
           if (livesLeft > 0) go('level1', { lives: livesLeft })
           else go('gameover')
         }

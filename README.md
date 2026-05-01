@@ -5,6 +5,35 @@ chicken nuggets and ice cream, dodges homework and insects, and dances
 at the goal. It's a loving homage to classic 80s platformers — none of
 the art, sounds, or words come from any other game.
 
+## What's new in v0.2 (read this to Camila)
+
+The whole game got a glow-up. Before, everything was plain coloured
+boxes; now everything is real pixel-art:
+
+- **The world** uses tiles from Kenney's free pixel-platformer pack:
+  green grass on top of brown dirt with pebbles on the bottom row,
+  brown wooden blocks for the floating platforms, and proper
+  grass-textured ground edges.
+- **The sky has clouds and hills** that drift past at different speeds
+  as you walk — that's called parallax, and it makes the world feel
+  bigger.
+- **You** now have a chef coat, a red neckerchief, two coat buttons,
+  navy pants, and brown shoes — and your legs swap when you walk.
+- **The notebooks** look like real homework: a cream cover with a red
+  HOMEWORK label, a black spiral binding, and an angry face.
+- **The bugs** are purple now (so they don't look like the platforms),
+  with antennae and tiny legs that wiggle.
+- **The chicken nugget and ice cream** have proper pixel-art looks
+  that bob up and down so they feel alive.
+- **The flag at the end** is a triangular banner with your chef hat
+  on it — and it waves.
+- **The lives counter** uses a real pixel-game font (no more system
+  font!) and there's a tiny nugget icon next to your collected count
+  in the top-left.
+- **The level is four screens long** instead of one — the camera
+  follows you with a Mario-style "dead zone" so it only moves when
+  you walk out to the edge of the screen.
+
 ## Run it on your computer
 
 ```sh
@@ -81,15 +110,25 @@ left, right, jump, and (after eating ice cream) a 🍦 throw button.
 
 ## Asset attribution
 
-All artwork in this game is original — Camila's face photos belong to
-her family, and every other element (apron, hat, legs, nugget, ice
-cream, enemies, flag, logo) is drawn live from rectangles and circles.
-
-All sound effects are synthesized in real time by the browser using
-the Web Audio API — no recordings are bundled. To swap in real
-samples later, drop CC0/CC-BY `.wav` files into `public/sounds/` and
-update `src/sounds.js` to play them with Kaplay's `loadSound` and
-`play()` instead of the procedural recipes.
+- **Camila's face photos** — © her family. Used with permission.
+- **Environment tiles + parallax backgrounds** — *Pixel Platformer*
+  pack by [Kenney](https://www.kenney.nl/assets/pixel-platformer),
+  released under [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+  See `public/sprites/kenney/LICENSE.txt` for the upstream notice.
+  Tiles in use: grass-top + dirt-with-pebbles for ground, brown
+  block for floating platforms, sky/cloud/hill silhouettes for the
+  parallax background.
+- **Camila's body, the homework notebook, the insect, the chicken
+  nugget, the chef-hat flag, the ice cream cone, and the scoop
+  projectile** — original pixel art, drawn pixel-by-pixel as JS
+  string arrays in `src/art/*.js`. Edit those files to repaint them.
+- **Pixel font** — *Press Start 2P* by [CodeMan38](https://github.com/google/fonts/tree/main/ofl/pressstart2p),
+  released under the [SIL Open Font License 1.1](https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL).
+  Bundled as `public/fonts/press-start-2p.ttf`.
+- **Sound effects** — synthesized in real time by the browser via
+  the Web Audio API. No recordings bundled. To swap in real samples
+  later, drop CC0/CC-BY `.wav` files into `public/sounds/` and
+  update `src/sounds.js`.
 
 ## Known iPad quirks
 

@@ -5,16 +5,15 @@ export function registerWinScene() {
     setGravity(0)
     add([ rect(width(), height()), color(20, 30, 60), pos(0, 0), fixed(), z(-100) ])
 
-    // Same chunky-logo trick as the menu, recoloured for victory.
     add([
-      text('YOU WIN!', { size: 96 }),
-      pos(width() / 2 + 6, height() / 2 - 60 + 6),
+      text('YOU WIN!', { font: 'press', size: 48 }),
+      pos(width() / 2 + 4, height() / 2 - 60 + 4),
       anchor('center'),
       color(180, 30, 30),
       fixed(),
     ])
     add([
-      text('YOU WIN!', { size: 96 }),
+      text('YOU WIN!', { font: 'press', size: 48 }),
       pos(width() / 2, height() / 2 - 60),
       anchor('center'),
       color(255, 220, 0),
@@ -30,7 +29,7 @@ export function registerWinScene() {
     ])
 
     add([
-      text('Play Again?  (Space / Tap)', { size: 28 }),
+      text('Play Again?  Space / Tap', { font: 'press', size: 14 }),
       pos(width() / 2, height() - 80),
       anchor('center'),
       color(255, 255, 255),
