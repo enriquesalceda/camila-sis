@@ -38,6 +38,10 @@ export function registerLevel1Scene() {
     let lastScoopAt = -Infinity
     let won = false
     let dying = false
+    // Scene-local mirror of Camila's scoop power. Kept here so it survives any
+    // sprite-component swap on Camila (e.g. when she grows tall) — we read
+    // from this flag in the input handler, not from camila.hasScoop directly.
+    let canScoop = false
 
     setGravity(GRAVITY)
     resetInput()
@@ -159,7 +163,7 @@ export function registerLevel1Scene() {
         camila.jump(JUMP_FORCE)
         play('jump')
       }
-      if (consumeScoop() && camila.hasScoop) {
+      if (consumeScoop() && canScoop) {
         const now = time() * 1000
         if (now - lastScoopAt > SCOOP_COOLDOWN_MS) {
           lastScoopAt = now
@@ -194,6 +198,7 @@ export function registerLevel1Scene() {
       destroy(i)
       play('powerup')
       p.hasScoop = true
+      canScoop = true
       setScoopVisible(true)
     })
 
@@ -242,6 +247,7 @@ export function registerLevel1Scene() {
       if (p.state === 'tall') {
         if (p.hasScoop) {
           p.hasScoop = false
+          canScoop = false
           setScoopVisible(false)
         } else {
           p.setState('small')
