@@ -40,9 +40,16 @@ export function makeCamila(x, y) {
 
   const startBody = bodyShape('small')
 
+  // Use a rect() as the body shape and let Kaplay derive the collision area
+  // from it. This makes anchor('bot') line up cleanly: pos.y is her feet,
+  // and the rect renders straight up from there. Custom area shapes paired
+  // with a manual anchor offset gave us an off-by-one-body-height bug.
   const c = add([
+    rect(startBody.w, startBody.h),
+    color(240, 240, 235),                // apron base color, overdrawn below
+    outline(2, rgb(40, 40, 40)),
     pos(x, y),
-    area({ shape: new Rect(vec2(-startBody.w / 2, -startBody.h), startBody.w, startBody.h) }),
+    area(),
     body(),
     anchor('bot'),
     opacity(1),
@@ -64,7 +71,8 @@ export function makeCamila(x, y) {
 
   function applyShape() {
     const b = bodyShape(c.state)
-    c.area.shape = new Rect(vec2(-b.w / 2, -b.h), b.w, b.h)
+    c.width = b.w
+    c.height = b.h
   }
 
   c.setState = (next) => {
@@ -132,22 +140,17 @@ export function makeCamila(x, y) {
   c.onDraw(() => {
     const b = bodyShape(c.state)
 
+    // The apron body is rendered by the rect() component on the parent.
+    // We just paint legs, stripe, face, and hat on top of it here.
+
     // Legs (skip when dead so the death pose looks limp).
     if (c.state !== 'dead') {
-      const legBaseY = -b.legH
       const liftL = c._legPhase === 0 ? 0 : -2
       const liftR = c._legPhase === 1 ? 0 : -2
-      drawRect({ pos: vec2(-b.w / 2 + 2,         legBaseY + liftL), width: b.legW, height: b.legH - liftL, color: LEG_COLOR })
-      drawRect({ pos: vec2( b.w / 2 - 2 - b.legW, legBaseY + liftR), width: b.legW, height: b.legH - liftR, color: LEG_COLOR })
+      drawRect({ pos: vec2(-b.w / 2 + 2,          -b.legH + liftL), width: b.legW, height: b.legH - liftL, color: LEG_COLOR })
+      drawRect({ pos: vec2( b.w / 2 - 2 - b.legW, -b.legH + liftR), width: b.legW, height: b.legH - liftR, color: LEG_COLOR })
     }
 
-    // Apron body
-    drawRect({
-      pos: vec2(-b.apronW / 2, -b.h + b.apronOffsetY - 4),
-      width: b.apronW, height: b.apronH,
-      color: APRON_COLOR,
-      outline: { width: 2, color: OUTLINE_COL },
-    })
     // Apron stripe
     drawRect({
       pos: vec2(-b.stripeW / 2, -b.h + b.stripeOffsetY),
