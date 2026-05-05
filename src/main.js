@@ -7,7 +7,6 @@ import { GRAVITY } from './config.js'
 import { loadAssets } from './loader.js'
 import { mountTouchControls } from './touch.js'
 import { registerMenuScene }     from './scenes/menu.js'
-import { registerAboutScene }    from './scenes/about.js'
 import { registerLevel1Scene }   from './scenes/level1.js'
 import { registerCelebrationScene } from './scenes/celebration.js'
 import { registerGameOverScene } from './scenes/gameover.js'
@@ -33,7 +32,6 @@ loadAssets()
 mountTouchControls()
 
 registerMenuScene()
-registerAboutScene()
 registerLevel1Scene()
 registerCelebrationScene()
 registerGameOverScene()
