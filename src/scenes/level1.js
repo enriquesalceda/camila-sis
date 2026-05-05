@@ -39,6 +39,7 @@ export function registerLevel1Scene() {
     const startingLives = (arg && arg.lives) ?? LIVES_AT_START
     let livesLeft = startingLives
     let nuggetCount = 0
+    let iceCreamCount = 0
     let lastScoopAt = -Infinity
     let won = false
     let dying = false
@@ -146,10 +147,11 @@ export function registerLevel1Scene() {
     })
 
     // ---- HUD ----
-    mountHUD({
+    const hud = mountHUD({
       levelName: 'WORLD 1-1: KITCHEN ROAD',
-      getNuggets: () => nuggetCount,
-      getLives:   () => livesLeft,
+      getNuggets:   () => nuggetCount,
+      getIceCreams: () => iceCreamCount,
+      getLives:     () => livesLeft,
     })
 
     // ---- Keyboard input ----
@@ -223,9 +225,13 @@ export function registerLevel1Scene() {
 
     // ---- Pickups ----
     onCollide('player', 'nugget', (p, n) => {
+      // Snapshot the world position before destroy so the HUD's ghost-fly
+      // animation has somewhere to launch from.
+      const where = n.pos.clone()
       destroy(n)
       nuggetCount += 1
       play('coin')
+      hud.flyToCounter('nugget', where)
       if (p.state === 'small') {
         play('powerup')
         p.flashPowerUp()
@@ -233,11 +239,14 @@ export function registerLevel1Scene() {
     })
 
     onCollide('player', 'icecream', (p, i) => {
+      const where = i.pos.clone()
       destroy(i)
+      iceCreamCount += 1
       play('powerup')
       p.hasScoop = true
       canScoop = true
       setScoopVisible(true)
+      hud.flyToCounter('icecream', where)
     })
 
     onCollide('player', 'castle-door', () => {
@@ -318,6 +327,10 @@ export function registerLevel1Scene() {
     function startDeath() {
       if (dying) return
       dying = true
+      // HUD feedback now, before the scene tears down — counter shake, red
+      // "−1", screen vignette pulse. Scene reload happens after Camila spins
+      // off-screen, so the player has time to see the consequence.
+      hud.notifyLifeLost()
       camila.frozen = true
       camila.setState('dead')
       camila.markDying()                       // triggers spin in entities/camila.js

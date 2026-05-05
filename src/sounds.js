@@ -84,6 +84,14 @@ const recipes = {
     notes.forEach((f, i) => tone({ type: 'square', startFreq: f,
                                    duration: 0.08, gain: 0.16, when: i * 0.07 }))
   },
+
+  // Triumphant rising arpeggio for an extra-life pickup. Exposed via
+  // hud.notifyExtraLife() but no level grants 1UPs today.
+  oneUp: () => {
+    const notes = [523, 659, 784, 1046] // C5 E5 G5 C6
+    notes.forEach((f, i) => tone({ type: 'square', startFreq: f,
+                                   duration: 0.06, gain: 0.18, when: i * 0.06 }))
+  },
 }
 
 export function play(name) {
