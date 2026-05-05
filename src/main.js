@@ -2,6 +2,7 @@
 // then jump to the menu.
 
 import kaplay from 'kaplay'
+import { inject } from '@vercel/analytics'
 
 import { GRAVITY } from './config.js'
 import { loadAssets } from './loader.js'
@@ -26,6 +27,8 @@ kaplay({
   debug: false,
   crisp: true,                         // nearest-neighbor upscale for pixel-art
 })
+
+inject()
 
 setGravity(GRAVITY)
 loadAssets()
