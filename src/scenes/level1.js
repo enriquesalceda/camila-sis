@@ -164,21 +164,14 @@ export function registerLevel1Scene() {
     onKeyPress('space',    queueJump)
     onKeyPress('up',       queueJump)
     onKeyPress('w',        queueJump)
-    // Throw key — bind several so the player has alternates if their browser
-    // intercepts one. Kaplay's onKeyPress + a direct window listener both
-    // route to queueScoop, so even if the engine's input layer drops a press
-    // the DOM listener catches it.
-    onKeyPress('z',        queueScoop)
-    onKeyPress('c',        queueScoop)
-    onKeyPress('shift',    queueScoop)
+    // Throw key — Z (or C as a backup). We key on event.code so caps lock and
+    // shift never matter: 'KeyZ' is the physical Z key, period. Capture-phase
+    // listener so we see the press before Kaplay's canvas handler.
     const domThrowHandler = (e) => {
-      if (e.key === 'z' || e.key === 'Z' || e.key === 'c' || e.key === 'C' ||
-          e.code === 'KeyZ' || e.code === 'KeyC' || e.key === 'Shift') {
-        queueScoop()
-      }
+      if (e.code === 'KeyZ' || e.code === 'KeyC') queueScoop()
     }
-    window.addEventListener('keydown', domThrowHandler)
-    onSceneLeave(() => window.removeEventListener('keydown', domThrowHandler))
+    window.addEventListener('keydown', domThrowHandler, { capture: true })
+    onSceneLeave(() => window.removeEventListener('keydown', domThrowHandler, { capture: true }))
 
     // ---- Per-frame: input → Camila ----
     camila.onUpdate(() => {
@@ -193,7 +186,6 @@ export function registerLevel1Scene() {
         play('jump')
       }
       const wantScoop = consumeScoop()
-      if (wantScoop) console.log('[scoop] press detected; canScoop =', canScoop)
       if (wantScoop && canScoop) {
         const now = time() * 1000
         if (now - lastScoopAt > SCOOP_COOLDOWN_MS) {
