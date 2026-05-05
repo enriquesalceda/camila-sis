@@ -293,7 +293,16 @@ function makeButton(x, y, label, onClick) {
     pos(0, 0), anchor('center'), color(120, 30, 30),
   ])
   btn.click = () => { play('coin'); onClick() }
-  btn.onClick(() => btn.click())
+  // iPad Safari doesn't fire canvas-entity onClick handlers when Kaplay is
+  // initialized with touchToMouse:false, so we hit-test on the global
+  // onMousePress instead — same pattern menu.js and gameover.js use.
+  onMousePress(() => {
+    if (!btn.exists()) return
+    const m = mousePos()
+    const dx = Math.abs(m.x - btn.pos.x)
+    const dy = Math.abs(m.y - btn.pos.y)
+    if (dx <= w / 2 && dy <= h / 2) btn.click()
+  })
   // Hover-ish nudge so it feels alive on touch / mouse.
   btn.onUpdate(() => { btn.pos.y = y + Math.sin(time() * 3 + x) * 1 })
   return btn
