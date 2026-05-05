@@ -5,6 +5,9 @@ chicken nuggets and ice cream, dodges homework and insects, and dances
 at the goal. It's a loving homage to classic 80s platformers — none of
 the art, sounds, or words come from any other game.
 
+The title screen now has a full hero scene with a bubbling pot,
+sparkling logo, and a notebook patrolling the bottom (v0.3).
+
 ## What's new in v0.2 (read this to Camila)
 
 The whole game got a glow-up. Before, everything was plain coloured
