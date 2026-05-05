@@ -7,8 +7,8 @@
 // or VERSION_TAG and the title will update next time you reload.
 
 import { LIVES_AT_START } from '../config.js'
-import { unlockAudio, play } from '../sounds.js'
 import { playMusic, fadeMusicIn, fadeMusicOut } from '../music.js'
+import { makeButton } from '../ui/button.js'
 
 // ---- Camila-tunable constants ----
 const HERO_PROP     = 'WHISK'                     // 'SPOON' | 'WHISK' | 'ICE_CREAM_CONE'
@@ -287,28 +287,27 @@ export function registerMenuScene() {
       z(20),
     ])
 
-    // ===== Prompt block =====
-    const cta = add([
-      text('TAP OR PRESS SPACE TO START', { font: 'press', size: 14 }),
-      pos(width() / 2, height() - 80),
-      anchor('center'),
-      color(255, 255, 255),
-      opacity(1),
-      fixed(),
-      z(30),
-    ])
-    cta.onUpdate(() => {
-      cta.opacity = 0.75 + 0.25 * Math.sin(time() * Math.PI * 2)
-    })
+    // ===== Buttons =====
+    // PLAY (primary, larger) and ABOUT (smaller, below). Both call unlockAudio
+    // via makeButton, so the first tap on a fresh page resumes the WebAudio
+    // context — required by Safari/Chrome autoplay policy.
+    const startGame = () => {
+      fadeMusicOut(0.4)
+      go('level1', { lives: LIVES_AT_START })
+    }
+    const openAbout = () => {
+      fadeMusicOut(0.4)
+      wait(0.4, () => go('about'))
+    }
 
-    add([
-      text('Arrows + Space. Z, Enter or click throws ice cream.', { font: 'press', size: 10 }),
-      pos(width() / 2, height() - 40),
-      anchor('center'),
-      color(140, 90, 10),
-      fixed(),
-      z(30),
-    ])
+    makeButton(width() / 2, height() - 110, 'PLAY', startGame,
+               { width: 240, height: 56, fontSize: 16 })
+    makeButton(width() / 2, height() - 50, 'ABOUT', openAbout,
+               { width: 160, height: 38, fontSize: 11 })
+
+    // Keyboard shortcuts (desktop). Space starts the game; A opens About.
+    onKeyPress('space', startGame)
+    onKeyPress('a',     openAbout)
 
     add([
       text(VERSION_TAG, { font: 'press', size: 8 }),
@@ -319,33 +318,18 @@ export function registerMenuScene() {
       z(30),
     ])
 
-    // ===== Start handler =====
-    // Browsers (Safari, Chrome, Firefox) keep audio suspended until the user
-    // has tapped the page once. So the first tap *primes* the title screen —
-    // unlocks audio, fades in the welcome loop, and switches the prompt. The
-    // second tap actually starts the level.
-    let primed = false
-    const handleInput = () => {
-      if (!primed) {
-        primed = true
-        unlockAudio()
-        playMusic({ tune: 'menu' })
-        fadeMusicIn(1.5, 0.4)
-        cta.text = 'TAP AGAIN TO PLAY'
-        return
-      }
-      play('coin')
-      fadeMusicOut(0.4)
-      go('level1', { lives: LIVES_AT_START })
-    }
-
-    onKeyPress('space', handleInput)
-    onMousePress(handleInput)
-
-    // Headless screenshot path — bypass the prime-then-play flow entirely.
+    // Headless screenshot path — skip the menu entirely for asset capture.
     if (typeof location !== 'undefined' && location.search.includes('autostart')) {
       setTimeout(() => go('level1', { lives: LIVES_AT_START }), 100)
     }
+
+    // Try to play the welcome loop on mount. On the very first cold load this
+    // is silent (the WebAudio context starts suspended until the user taps),
+    // but on every subsequent visit — including returning from About or after
+    // the celebration scene — the audio context is already unlocked and the
+    // music fades in audibly.
+    playMusic({ tune: 'menu' })
+    fadeMusicIn(1.5, 0.4)
   })
 }
 

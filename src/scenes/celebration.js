@@ -40,11 +40,11 @@ export const MUSIC_TRACK = ''
 // =====================================================================
 
 import { LIVES_AT_START } from '../config.js'
-import { play } from '../sounds.js'
 import { playMusic, fadeMusicIn, fadeMusicOut } from '../music.js'
 import { spawnFirework } from '../celebration/fireworks.js'
 import { spawnConfetti } from '../celebration/confetti.js'
 import { makeMascot }    from '../entities/mascot.js'
+import { makeButton }    from '../ui/button.js'
 
 export function registerCelebrationScene() {
   scene('celebration', (arg = {}) => {
@@ -277,33 +277,3 @@ export function registerCelebrationScene() {
   })
 }
 
-// Small reusable pixel button — yellow rect with red shadow + black outline.
-function makeButton(x, y, label, onClick) {
-  const w = 220
-  const h = 48
-  const btn = add([
-    rect(w, h), pos(x, y), color(255, 220, 0), anchor('center'),
-    outline(3, rgb(26, 26, 26)),
-    area(),
-    fixed(),
-    z(60),
-  ])
-  btn.add([
-    text(label, { font: 'press', size: 12 }),
-    pos(0, 0), anchor('center'), color(120, 30, 30),
-  ])
-  btn.click = () => { play('coin'); onClick() }
-  // iPad Safari doesn't fire canvas-entity onClick handlers when Kaplay is
-  // initialized with touchToMouse:false, so we hit-test on the global
-  // onMousePress instead — same pattern menu.js and gameover.js use.
-  onMousePress(() => {
-    if (!btn.exists()) return
-    const m = mousePos()
-    const dx = Math.abs(m.x - btn.pos.x)
-    const dy = Math.abs(m.y - btn.pos.y)
-    if (dx <= w / 2 && dy <= h / 2) btn.click()
-  })
-  // Hover-ish nudge so it feels alive on touch / mouse.
-  btn.onUpdate(() => { btn.pos.y = y + Math.sin(time() * 3 + x) * 1 })
-  return btn
-}
