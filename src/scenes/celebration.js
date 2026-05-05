@@ -40,6 +40,7 @@ export const MUSIC_TRACK = ''
 // =====================================================================
 
 import { LIVES_AT_START } from '../config.js'
+import { play } from '../sounds.js'
 import { playMusic, fadeMusicIn, fadeMusicOut } from '../music.js'
 import { spawnFirework } from '../celebration/fireworks.js'
 import { spawnConfetti } from '../celebration/confetti.js'
