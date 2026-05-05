@@ -4,9 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "process-faces": "node scripts/process-faces.mjs",
+    "predev":        "npm run process-faces",
+    "prebuild":      "npm run process-faces",
+    "dev":           "vite",
+    "build":         "vite build",
+    "preview":       "vite preview"
   },
   "dependencies": {
     "kaplay": "^3001.0.19"

@@ -36,4 +36,7 @@ registerLevel1Scene()
 registerWinScene()
 registerGameOverScene()
 
-go('menu')
+// Allow ?scene=level1 (or any registered scene) to skip the title screen —
+// useful for headless screenshot capture and quick iteration during dev.
+const startScene = new URLSearchParams(window.location.search).get('scene') || 'menu'
+go(startScene)

@@ -295,6 +295,7 @@ export function registerLevel1Scene() {
       dying = true
       camila.frozen = true
       camila.setState('dead')
+      camila.markDying()                       // triggers spin in entities/camila.js
       camila.vel.x = 0
       camila.vel.y = -480
       camila.unuse('area')

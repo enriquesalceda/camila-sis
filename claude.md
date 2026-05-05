@@ -32,3 +32,11 @@ Will be demoed in her classroom on iPad via a public URL.
 ## Workflow
 - Small, frequent commits with kid-friendly messages
 - After any change, summarize what's new in 1-2 sentences I can read to her
+
+## Asset size limits
+- Source images (face PNGs, sprite sheets, screenshots) must be
+  ≤ 2000px on any dimension. Game-bound images should be much
+  smaller — Camila's face PNGs are 256x256, sprite sheets ≤ 512px.
+- Before committing any new image, run `npm run check-image-sizes`
+  which fails the commit if anything exceeds 1500px.
+- Screenshots for debugging: downscale to ≤1280px before sharing.

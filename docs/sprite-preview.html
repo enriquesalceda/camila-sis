@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Camila sprite preview</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #f4eedf;
+        margin: 24px;
+        color: #2a2a2a;
+      }
+      h1 { margin-top: 0; }
+      h2 {
+        margin: 24px 0 8px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #555;
+      }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+      figure {
+        background: #87ceeb;          /* same sky as the game */
+        padding: 8px;
+        border: 1px solid #2a2a2a;
+        margin: 0;
+        text-align: center;
+      }
+      figure img {
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        display: block;
+        margin: 0 auto;
+      }
+      figcaption {
+        margin-top: 6px;
+        font-size: 11px;
+        color: #444;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Camila sprite preview</h1>
+    <p>
+      Each frame rendered at scale 8 from <code>src/art/camila-body.js</code>.
+      Body sprite only — the face PNG composites on top in-game.
+    </p>
+
+    <h2>Small Camila — idle, walk-0, walk-1, walk-2, walk-3, jump</h2>
+    <div class="row" id="small"></div>
+
+    <h2>Tall Camila — idle, walk-0, walk-1, walk-2, walk-3, jump</h2>
+    <div class="row" id="tall"></div>
+
+    <h2>Dance — 6-frame loop (last frame = hat hop)</h2>
+    <div class="row" id="dance"></div>
+
+    <script type="module">
+      import { makePixelCanvas } from '../src/pixel-art.js'
+      import {
+        camilaSmallFrames,
+        camilaTallFrames,
+        camilaDanceFrames,
+        camilaPalette,
+      } from '../src/art/camila-body.js'
+
+      const SCALE = 8
+      const labels = ['idle', 'walk-0', 'walk-1', 'walk-2', 'walk-3', 'jump']
+      const danceLabels = ['arms down', 'left up', 'both up', 'right up', 'both up', 'hat hop']
+
+      function render(parentId, frames, frameLabels) {
+        const parent = document.getElementById(parentId)
+        frames.forEach((frame, i) => {
+          const canvas = makePixelCanvas(frame, camilaPalette)
+          const w = canvas.width * SCALE
+          const h = canvas.height * SCALE
+          const upscaled = document.createElement('canvas')
+          upscaled.width = w
+          upscaled.height = h
+          const ctx = upscaled.getContext('2d')
+          ctx.imageSmoothingEnabled = false
+          ctx.drawImage(canvas, 0, 0, w, h)
+          const img = new Image()
+          img.src = upscaled.toDataURL()
+          img.width = w
+          img.height = h
+          const fig = document.createElement('figure')
+          fig.appendChild(img)
+          const cap = document.createElement('figcaption')
+          cap.textContent = frameLabels[i]
+          fig.appendChild(cap)
+          parent.appendChild(fig)
+        })
+      }
+
+      render('small', camilaSmallFrames, labels)
+      render('tall',  camilaTallFrames,  labels)
+      render('dance', camilaDanceFrames, danceLabels)
+    </script>
+  </body>
+</html>

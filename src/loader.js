@@ -3,7 +3,7 @@
 
 import { makePixelStrip } from './pixel-art.js'
 
-import { camilaSmallFrames, camilaTallFrames, camilaPalette } from './art/camila-body.js'
+import { camilaSmallFrames, camilaTallFrames, camilaDanceFrames, camilaPalette } from './art/camila-body.js'
 import { notebookFrames, notebookPalette } from './art/notebook.js'
 import { insectFrames,   insectPalette   } from './art/insect.js'
 import { nuggetFrames,   nuggetPalette   } from './art/nugget.js'
@@ -11,6 +11,8 @@ import { flagFrames,     flagPalette     } from './art/flag.js'
 import { scoopFrames,    scoopPalette,
          sparkleFrames,  sparklePalette  } from './art/scoop.js'
 import { iceCreamFrames, iceCreamPalette } from './art/ice-cream.js'
+import { potFrames,      potPalette,
+         titleSparkleFrames, titleSparklePalette } from './art/title-props.js'
 
 // Frame indices into the Kenney `tiles` sheet (20 cols × 9 rows of 18×18 tiles).
 // Camila — these numbers pick which little square of art to use for each
@@ -48,11 +50,14 @@ export const BG_FRAMES = {
 }
 
 export function loadAssets() {
-  // Existing face PNGs — left over from v0.1, still used for face overlay.
-  loadSprite('camila-normal', './sprites/camila/normal.png')
-  loadSprite('camila-power',  './sprites/camila/power.png')
-  loadSprite('camila-tall',   './sprites/camila/tall.png')
-  loadSprite('camila-dead',   './sprites/camila/dead.png')
+  // Face PNGs — the white background was stripped + edges feathered by
+  // scripts/process-faces.mjs (which runs before `npm run dev`/`npm run build`).
+  // texFilter: 'linear' so the photo upscales smoothly instead of going
+  // chunky-pixelated like the rest of the art.
+  loadSprite('camila-normal', './sprites/camila/processed/normal.png', { texFilter: 'linear' })
+  loadSprite('camila-power',  './sprites/camila/processed/power.png',  { texFilter: 'linear' })
+  loadSprite('camila-tall',   './sprites/camila/processed/tall.png',   { texFilter: 'linear' })
+  loadSprite('camila-dead',   './sprites/camila/processed/dead.png',   { texFilter: 'linear' })
 
   // Kenney sheets — 1px gutter between tiles in the packed sheets.
   loadSprite('tiles',       './sprites/kenney/tiles.png',       { sliceX: 20, sliceY: 9, gridWidth: 18, gridHeight: 18, spacing: 1 })
@@ -61,12 +66,24 @@ export function loadAssets() {
   // Hand-authored sprites built from the JS pixel arrays in src/art/. Each
   // returns a <canvas> we can hand straight to loadSprite.
   loadSprite('camila-small', makePixelStrip(camilaSmallFrames, camilaPalette), {
-    sliceX: 2,
-    anims: { idle: 0, walk: { from: 0, to: 1, loop: true, speed: 6 } },
+    sliceX: 6,
+    anims: {
+      idle: 0,
+      walk: { from: 1, to: 4, loop: true, speed: 8 },
+      jump: 5,
+    },
   })
   loadSprite('camila-tall-body', makePixelStrip(camilaTallFrames, camilaPalette), {
-    sliceX: 2,
-    anims: { idle: 0, walk: { from: 0, to: 1, loop: true, speed: 6 } },
+    sliceX: 6,
+    anims: {
+      idle: 0,
+      walk: { from: 1, to: 4, loop: true, speed: 8 },
+      jump: 5,
+    },
+  })
+  loadSprite('camila-dance', makePixelStrip(camilaDanceFrames, camilaPalette), {
+    sliceX: 6,
+    anims: { dance: { from: 0, to: 5, loop: true, speed: 6 } },
   })
   loadSprite('notebook', makePixelStrip(notebookFrames, notebookPalette), {
     sliceX: 2,
@@ -84,6 +101,13 @@ export function loadAssets() {
   })
   loadSprite('scoop',   makePixelStrip(scoopFrames,   scoopPalette))
   loadSprite('sparkle', makePixelStrip(sparkleFrames, sparklePalette))
+
+  // Title-screen-only props.
+  loadSprite('title-pot',     makePixelStrip(potFrames,           potPalette))
+  loadSprite('title-sparkle', makePixelStrip(titleSparkleFrames,  titleSparklePalette), {
+    sliceX: 3,
+    anims: { twinkle: { from: 0, to: 2, loop: false, speed: 6 } },
+  })
 
   // Pixel font, bundled locally — never fetched from a CDN.
   loadFont('press', './fonts/press-start-2p.ttf')
