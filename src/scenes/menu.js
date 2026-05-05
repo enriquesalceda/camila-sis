@@ -8,6 +8,7 @@
 
 import { LIVES_AT_START } from '../config.js'
 import { unlockAudio, play } from '../sounds.js'
+import { playMusic, fadeMusicIn, fadeMusicOut } from '../music.js'
 
 // ---- Camila-tunable constants ----
 const HERO_PROP     = 'WHISK'                     // 'SPOON' | 'WHISK' | 'ICE_CREAM_CONE'
@@ -322,6 +323,7 @@ export function registerMenuScene() {
     const start = () => {
       unlockAudio()
       play('coin')
+      fadeMusicOut(0.4)
       go('level1', { lives: LIVES_AT_START })
     }
 
@@ -331,6 +333,12 @@ export function registerMenuScene() {
     if (typeof location !== 'undefined' && location.search.includes('autostart')) {
       setTimeout(start, 100)
     }
+
+    // Gentle welcome loop. iPad Safari blocks audio until the first tap, so
+    // on a fresh page load this stays silent until the player taps to start —
+    // they'll hear it next time they visit the menu (e.g. from celebration).
+    playMusic({ tune: 'menu' })
+    fadeMusicIn(1.5, 0.4)
   })
 }
 
