@@ -1,3 +1,5 @@
+import { LIVES_AT_START } from '../config.js'
+
 export function registerGameOverScene() {
   scene('gameover', () => {
     setGravity(0)
@@ -17,7 +19,7 @@ export function registerGameOverScene() {
       fixed(),
     ])
 
-    const restart = () => go('menu')
+    const restart = () => go('level1', { lives: LIVES_AT_START })
     onKeyPress('space', restart)
     onMousePress(restart)
   })
