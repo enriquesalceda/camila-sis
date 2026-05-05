@@ -64,6 +64,26 @@ const recipes = {
     tone({ startFreq: 2093, duration: 0.5, gain: 0.18, when: 0.7 })
   },
   scoop:   () => noiseBurst({ duration: 0.20, gain: 0.15, filterType: 'highpass', cutoff: 800 }),
+
+  // Celebration scene SFX.
+  'firework-whoosh': () => noiseBurst({ duration: 0.30, gain: 0.18,
+                                        filterType: 'bandpass', cutoff: 1500 }),
+  'firework-pop':    () => {
+    noiseBurst({ duration: 0.12, gain: 0.30, filterType: 'lowpass', cutoff: 3000 })
+    tone({ type: 'square', startFreq: 1800, endFreq: 600,
+           duration: 0.10, gain: 0.10, when: 0.02 })
+  },
+  'confetti-rustle': () => noiseBurst({ duration: 1.20, gain: 0.05,
+                                        filterType: 'highpass', cutoff: 4000 }),
+  ding:    () => {
+    tone({ type: 'sine', startFreq: 1318, duration: 0.18, gain: 0.20 })
+    tone({ type: 'sine', startFreq: 2093, duration: 0.30, gain: 0.18, when: 0.10 })
+  },
+  'mascot-yay': () => {
+    const notes = [659, 784, 988, 1318]
+    notes.forEach((f, i) => tone({ type: 'square', startFreq: f,
+                                   duration: 0.08, gain: 0.16, when: i * 0.07 }))
+  },
 }
 
 export function play(name) {

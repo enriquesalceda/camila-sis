@@ -13,6 +13,12 @@ import { scoopFrames,    scoopPalette,
 import { iceCreamFrames, iceCreamPalette } from './art/ice-cream.js'
 import { potFrames,      potPalette,
          titleSparkleFrames, titleSparklePalette } from './art/title-props.js'
+import { archFrames, archPalette,
+         bigMVariants, bigMPalette,
+         chefFlagFrames, chefFlagPalette,
+         smokeFrames, smokePalette } from './art/castle.js'
+import { mascotVariants, mascotPalette } from './art/mascot.js'
+import { castVariants, castPalette }     from './art/celebration-cast.js'
 
 // Frame indices into the Kenney `tiles` sheet (20 cols × 9 rows of 18×18 tiles).
 // Camila — these numbers pick which little square of art to use for each
@@ -101,6 +107,35 @@ export function loadAssets() {
   })
   loadSprite('scoop',   makePixelStrip(scoopFrames,   scoopPalette))
   loadSprite('sparkle', makePixelStrip(sparkleFrames, sparklePalette))
+
+  // Castle + celebration sprites — the giant MR M'S restaurant at the
+  // end of level 1, plus everything used on the rooftop celebration.
+  loadSprite('castle-arch', makePixelStrip(archFrames, archPalette))
+  for (const [style, frames] of Object.entries(bigMVariants)) {
+    loadSprite(`castle-bigm-${style}`, makePixelStrip(frames, bigMPalette))
+  }
+  loadSprite('castle-chef-flag', makePixelStrip(chefFlagFrames, chefFlagPalette), {
+    sliceX: 3,
+    anims: { wave: { from: 0, to: 2, loop: true, speed: 6 } },
+  })
+  loadSprite('castle-smoke', makePixelStrip(smokeFrames, smokePalette), {
+    sliceX: 4,
+  })
+  for (const [kind, frames] of Object.entries(mascotVariants)) {
+    loadSprite(`mascot-${kind}`, makePixelStrip(frames, mascotPalette), {
+      sliceX: 4,
+      anims: {
+        idle: { from: 0, to: 1, loop: true, speed: 2 },
+        wave: { from: 2, to: 3, loop: true, speed: 4 },
+      },
+    })
+  }
+  for (const [kind, frames] of Object.entries(castVariants)) {
+    loadSprite(`cast-${kind}`, makePixelStrip(frames, castPalette), {
+      sliceX: 4,
+      anims: { dance: { from: 0, to: 3, loop: true, speed: 6 } },
+    })
+  }
 
   // Title-screen-only props.
   loadSprite('title-pot',     makePixelStrip(potFrames,           potPalette))

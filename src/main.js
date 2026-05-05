@@ -8,7 +8,7 @@ import { loadAssets } from './loader.js'
 import { mountTouchControls } from './touch.js'
 import { registerMenuScene }     from './scenes/menu.js'
 import { registerLevel1Scene }   from './scenes/level1.js'
-import { registerWinScene }      from './scenes/win.js'
+import { registerCelebrationScene } from './scenes/celebration.js'
 import { registerGameOverScene } from './scenes/gameover.js'
 
 // Boot Kaplay. With `global: true` its helpers (add, scene, go, drawRect,
@@ -33,7 +33,7 @@ mountTouchControls()
 
 registerMenuScene()
 registerLevel1Scene()
-registerWinScene()
+registerCelebrationScene()
 registerGameOverScene()
 
 // Allow ?scene=level1 (or any registered scene) to skip the title screen —

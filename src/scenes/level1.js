@@ -17,6 +17,10 @@ import { makeCamila } from '../entities/camila.js'
 import { makeNotebook } from '../entities/notebook.js'
 import { makeInsect } from '../entities/insect.js'
 import { makeScoop } from '../entities/scoop.js'
+import { makeCastle } from '../entities/castle.js'
+import {
+  BRAND_NAME, BRAND_LETTER_STYLE, MASCOT,
+} from './celebration.js'
 import { play } from '../sounds.js'
 import { setScoopVisible } from '../touch.js'
 import { TILE_FRAMES } from '../loader.js'
@@ -38,6 +42,8 @@ export function registerLevel1Scene() {
     let lastScoopAt = -Infinity
     let won = false
     let dying = false
+    const sceneStartTime = time()
+    let nuggetTotal = 0   // counted as the level is parsed below
     // Scene-local mirror of Camila's scoop power. Kept here so it survives any
     // sprite-component swap on Camila (e.g. when she grows tall) — we read
     // from this flag in the input handler, not from camila.hasScoop directly.
@@ -102,24 +108,18 @@ export function registerLevel1Scene() {
       },
       notebook: makeNotebook,
       insect:   makeInsect,
-      flag: (x, y) => {
-        // Pole + flag combined into one sprite. The sprite is anchored at
-        // the bottom of the pole; the visible flag rectangle sticks out the top.
-        return add([
-          sprite('flag', { width: 48, height: TILE * 5 }),
-          pos(x, y),
-          anchor('bot'),
-          area({ shape: new Rect(vec2(0, 0), 48, TILE * 5) }),
-          'flag',
-          'flag-pole',
-        ]).play('wave')
-      },
+      castle: (x, y) => makeCastle(x, y, {
+        letterStyle: BRAND_LETTER_STYLE,
+        mascot:      MASCOT,
+        brandName:   BRAND_NAME,
+      }),
     }
 
     // Pin the bottom row of the ASCII map to the bottom of the camera.
     const rows = LEVEL_1.split('\n').length
     const offsetY = height() - rows * TILE
     const { spawn, levelWidth } = parseLevel(LEVEL_1, makers, { offsetY })
+    nuggetTotal = (LEVEL_1.match(/\?/g) || []).length
 
     // Hidden killzone below the visible camera.
     const killzoneY = height() + 200
@@ -225,12 +225,30 @@ export function registerLevel1Scene() {
       setScoopVisible(true)
     })
 
-    onCollide('player', 'flag', () => {
+    onCollide('player', 'castle-door', () => {
       if (won) return
       won = true
-      camila.startDance()
-      play('win')
-      wait(2.2, () => go('win'))
+      camila.frozen = true
+      camila.vel.x = 0
+      // Auto-walk Camila INTO the door — small rightward nudge plus a fade
+      // to white over 0.7 s, then we hand off to the celebration scene.
+      const walkIn = onUpdate(() => { camila.pos.x += 24 * dt() })
+      wait(0.5, () => walkIn.cancel())
+      play('ding')
+
+      // Full-screen white wash that grows from invisible to opaque.
+      const wash = add([
+        rect(width(), height()),
+        pos(0, 0), color(255, 255, 255), opacity(0),
+        fixed(), z(1000),
+      ])
+      wash.onUpdate(() => { wash.opacity = Math.min(1, wash.opacity + dt() / 0.7) })
+
+      wait(1.0, () => go('celebration', {
+        nuggets: nuggetCount,
+        total: nuggetTotal,
+        time: time() - sceneStartTime,
+      }))
     })
 
     // ---- Combat ----

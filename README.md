@@ -84,7 +84,7 @@ text! Each letter is one square:
 | `i` | ice cream (lets Camila throw scoops with X) |
 | `n` | homework notebook (enemy — jump on its head) |
 | `b` | insect (enemy — jump twice to kick its shell) |
-| `F` | goal flag (touch to win) |
+| `M` | MR M'S castle door (walk into it to win!) |
 | `S` | where Camila starts |
 | `.` | empty sky |
 
@@ -111,6 +111,29 @@ saying what it does in plain English. Try these to start:
 On a touch device (iPad), four buttons appear over the canvas:
 left, right, jump, and (after eating ice cream) a 🍦 throw button.
 
+## Customizing the MR M'S castle
+
+The end of level 1 now ends in a giant fictional fast-food castle called
+**MR M'S**. Walking into the front door fades to white and starts a
+rooftop celebration with dancing guests, fireworks, and confetti.
+
+Open [`src/scenes/celebration.js`](src/scenes/celebration.js) and edit
+the constants at the top of the file:
+
+| Constant | What it does |
+| --- | --- |
+| `BRAND_NAME` | The name on the wordmark banner. Default: `MR M'S`. **Keep it fictional** — please don't put a real fast-food chain's name here. |
+| `BRAND_LETTER_STYLE` | Which big-M art to use: `'blocky'`, `'chefhat'`, `'fries'`, or `'burger'`. |
+| `MASCOT` | Who peeks from the castle window AND dances on the roof: `'burger'`, `'fries'`, `'shake'`, `'nugget'`, `'icecream'`, or `'chef'`. |
+| `CELEBRATION_GUESTS` | Array of friends on the rooftop. Each entry is one of `'notebook-party'`, `'insect-party'`, `'nugget-dance'`, `'icecream-dance'`, `'mascot'`. Use 4–6 of them. |
+| `FIREWORK_COUNT` | How many fireworks fire in the opening burst. |
+| `MUSIC_TRACK` | A filename inside `public/sounds/` to loop as the victory song. Leave `''` to use the built-in chiptune synth. |
+
+The brand is **fictional**: the arches are intentionally blocky pixel
+shapes (NOT the smooth parabolic shape of any real-world chain), the M
+is a cartoon pixel letter, and the menu items are generic ("nuggets",
+"ice cream"). Please keep those properties when customizing.
+
 ## Asset attribution
 
 - **Camila's face photos** — © her family. Used with permission.
@@ -132,6 +155,14 @@ left, right, jump, and (after eating ice cream) a 🍦 throw button.
   the Web Audio API. No recordings bundled. To swap in real samples
   later, drop CC0/CC-BY `.wav` files into `public/sounds/` and
   update `src/sounds.js`.
+- **Victory music (celebration scene)** — synthesized in real time
+  using the same WebAudio path (see `src/music.js`). To use a real
+  CC0 chiptune loop instead, drop a `.ogg`/`.mp3` into
+  `public/sounds/` and set `MUSIC_TRACK` at the top of
+  `src/scenes/celebration.js` to its filename. Recommended sources:
+  [OpenGameArt](https://opengameart.org/content-type/music) and
+  [freesound.org](https://freesound.org), filtered to CC0 or CC-BY.
+  Add an attribution line here when you bundle one.
 
 ## Known iPad quirks
 
@@ -181,8 +212,8 @@ camila-sis/
     │   ├── insect.js     ← bouncy bug enemy
     │   └── scoop.js      ← thrown ice cream
     └── scenes/
-        ├── menu.js       ← title screen
-        ├── level1.js     ← gameplay
-        ├── win.js        ← "You Win!" screen
-        └── gameover.js   ← "Game Over" screen
+        ├── menu.js          ← title screen
+        ├── level1.js        ← gameplay
+        ├── celebration.js   ← rooftop victory party (MR M'S castle)
+        └── gameover.js      ← "Game Over" screen
 ```
