@@ -17,24 +17,15 @@ const inDir    = join(repoRoot, 'public', 'sprites', 'camila')
 const outDir   = join(inDir, 'processed')
 const sources  = ['normal.png', 'power.png', 'tall.png', 'dead.png']
 
-// Fail loud if ImageMagick is missing — we don't want a silent "looks the
-// same as before" outcome.
-try {
-  execFileSync('magick', ['-version'], { stdio: 'ignore' })
-} catch {
-  console.error('[process-faces] ERROR: ImageMagick `magick` not found on PATH.')
-  console.error('[process-faces]   Install with `brew install imagemagick`.')
-  process.exit(1)
-}
-
-mkdirSync(outDir, { recursive: true })
-
 // Tunables — tweak if her edges look chewed (raise fuzz) or haloed (lower it).
 const FUZZ_PCT = 6     // % around white that counts as "background"
 const FEATHER  = 0.7   // gaussian sigma on the alpha channel (1-2 px feather)
 
-let any = false
-
+// First pass: figure out what (if anything) needs regeneration. We defer the
+// ImageMagick availability check until we know there's actual work, so CI
+// builds (Vercel) can succeed off the committed processed/*.png without
+// needing magick installed.
+const todo = []
 for (const file of sources) {
   const src = join(inDir, file)
   const dst = join(outDir, file)
@@ -50,7 +41,27 @@ for (const file of sources) {
     continue
   }
 
-  any = true
+  todo.push({ file, src, dst })
+}
+
+if (todo.length === 0) {
+  console.log('[process-faces] all files up to date.')
+  console.log('[process-faces] done.')
+  process.exit(0)
+}
+
+// We have real work — now ImageMagick is required.
+try {
+  execFileSync('magick', ['-version'], { stdio: 'ignore' })
+} catch {
+  console.error('[process-faces] ERROR: ImageMagick `magick` not found on PATH.')
+  console.error('[process-faces]   Install with `brew install imagemagick`.')
+  process.exit(1)
+}
+
+mkdirSync(outDir, { recursive: true })
+
+for (const { file, src, dst } of todo) {
 
   // 1) Knock out near-white pixels with -fuzz + -transparent.
   // 2) Soften the alpha edge by 1-2 px so the cutout doesn't look jagged.
@@ -76,7 +87,4 @@ for (const file of sources) {
   console.log(`[process-faces] ${file} → processed/${file} corner=${corner} ${ok ? 'ok' : 'WARNING: corner not transparent'}`)
 }
 
-if (!any) {
-  console.log('[process-faces] all files up to date.')
-}
 console.log('[process-faces] done.')
