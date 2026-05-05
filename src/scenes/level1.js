@@ -323,7 +323,11 @@ export function registerLevel1Scene() {
       camila.markDying()                       // triggers spin in entities/camila.js
       camila.vel.x = 0
       camila.vel.y = -480
-      camila.unuse('area')
+      // Ghost through everything so she can spin off-screen. We can't
+      // unuse('area') here — her per-frame update still calls isGrounded(),
+      // and Kaplay's collision loop iterates area.collisionIgnore on her in
+      // the same tick. Removing the component mid-frame crashes both.
+      camila.collisionIgnore = ['solid', 'enemy', 'nugget', 'icecream', 'castle-door']
       play('death')
 
       const watcher = onUpdate(() => {
