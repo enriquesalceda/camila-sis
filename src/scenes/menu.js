@@ -11,7 +11,7 @@ import { unlockAudio, play } from '../sounds.js'
 
 // ---- Camila-tunable constants ----
 const HERO_PROP     = 'WHISK'                     // 'SPOON' | 'WHISK' | 'ICE_CREAM_CONE'
-const SUBTITLE_TEXT = 'A GAME BY ENRIQUE & CAMILA'
+const SUBTITLE_TEXT = 'A GAME BY CAMILA & HER DAD (QUIQUE)'
 const VERSION_TAG   = 'v0.1'
 const SHOW_INSECT   = true                        // tag-along bug behind the notebook
 
@@ -281,7 +281,7 @@ export function registerMenuScene() {
       text(SUBTITLE_TEXT, { font: 'press', size: 12, align: 'center' }),
       pos(logoX, logoY + 36),
       anchor('center'),
-      color(255, 255, 255),
+      color(140, 90, 10),
       fixed(),
       z(20),
     ])
