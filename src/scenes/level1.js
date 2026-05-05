@@ -164,14 +164,29 @@ export function registerLevel1Scene() {
     onKeyPress('space',    queueJump)
     onKeyPress('up',       queueJump)
     onKeyPress('w',        queueJump)
-    // Throw key — Z (or C as a backup). We key on event.code so caps lock and
-    // shift never matter: 'KeyZ' is the physical Z key, period. Capture-phase
-    // listener so we see the press before Kaplay's canvas handler.
-    const domThrowHandler = (e) => {
-      if (e.code === 'KeyZ' || e.code === 'KeyC') queueScoop()
+    // Throw triggers. Z is the primary key (kid muscle-memory) but some
+    // browser extensions like Vimium intercept lowercase letter keys with a
+    // capture-phase document listener and stopImmediatePropagation, which
+    // hides them from the page. So we also bind Enter, Shift, and a click on
+    // the game canvas — none of those are typically grabbed by extensions or
+    // IMEs. We key on event.code so caps lock / shift state never matter.
+    const THROW_CODES = new Set([
+      'KeyZ', 'KeyC', 'Enter', 'NumpadEnter', 'ShiftLeft', 'ShiftRight',
+    ])
+    const domThrowKey = (e) => {
+      if (THROW_CODES.has(e.code)) queueScoop()
     }
-    window.addEventListener('keydown', domThrowHandler, { capture: true })
-    onSceneLeave(() => window.removeEventListener('keydown', domThrowHandler, { capture: true }))
+    const domThrowClick = (e) => {
+      // Only fire on clicks that land on the game canvas — clicks on the
+      // on-screen 🍦 touch button already route through queueScoop themselves.
+      if (e.target && e.target.tagName === 'CANVAS') queueScoop()
+    }
+    window.addEventListener('keydown',   domThrowKey,   { capture: true })
+    window.addEventListener('mousedown', domThrowClick, { capture: true })
+    onSceneLeave(() => {
+      window.removeEventListener('keydown',   domThrowKey,   { capture: true })
+      window.removeEventListener('mousedown', domThrowClick, { capture: true })
+    })
 
     // ---- Per-frame: input → Camila ----
     camila.onUpdate(() => {
