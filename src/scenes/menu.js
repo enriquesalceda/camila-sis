@@ -320,25 +320,32 @@ export function registerMenuScene() {
     ])
 
     // ===== Start handler =====
-    const start = () => {
-      unlockAudio()
+    // Browsers (Safari, Chrome, Firefox) keep audio suspended until the user
+    // has tapped the page once. So the first tap *primes* the title screen —
+    // unlocks audio, fades in the welcome loop, and switches the prompt. The
+    // second tap actually starts the level.
+    let primed = false
+    const handleInput = () => {
+      if (!primed) {
+        primed = true
+        unlockAudio()
+        playMusic({ tune: 'menu' })
+        fadeMusicIn(1.5, 0.4)
+        cta.text = 'TAP AGAIN TO PLAY'
+        return
+      }
       play('coin')
       fadeMusicOut(0.4)
       go('level1', { lives: LIVES_AT_START })
     }
 
-    onKeyPress('space', start)
-    onMousePress(start)
+    onKeyPress('space', handleInput)
+    onMousePress(handleInput)
 
+    // Headless screenshot path — bypass the prime-then-play flow entirely.
     if (typeof location !== 'undefined' && location.search.includes('autostart')) {
-      setTimeout(start, 100)
+      setTimeout(() => go('level1', { lives: LIVES_AT_START }), 100)
     }
-
-    // Gentle welcome loop. iPad Safari blocks audio until the first tap, so
-    // on a fresh page load this stays silent until the player taps to start —
-    // they'll hear it next time they visit the menu (e.g. from celebration).
-    playMusic({ tune: 'menu' })
-    fadeMusicIn(1.5, 0.4)
   })
 }
 
