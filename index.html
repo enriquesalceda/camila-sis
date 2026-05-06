@@ -16,7 +16,7 @@
         font-family: -apple-system, system-ui, sans-serif;
       }
       #game {
-        display: block; width: 100vw; height: 100vh;
+        display: block; width: 100vw; height: 100vh; height: 100dvh;
         image-rendering: pixelated;
         image-rendering: -moz-crisp-edges;
         image-rendering: crisp-edges;
@@ -35,10 +35,10 @@
         -webkit-tap-highlight-color: transparent;
       }
       .t-btn:active { background: rgba(255,255,255,0.4); }
-      .t-left  { left: 24px;  bottom: 24px; }
-      .t-right { left: 132px; bottom: 24px; }
-      .t-jump  { right: 24px; bottom: 24px; }
-      .t-scoop { right: 132px; bottom: 24px; }
+      .t-left  { left:  calc(24px  + env(safe-area-inset-left));  bottom: calc(24px + env(safe-area-inset-bottom)); }
+      .t-right { left:  calc(132px + env(safe-area-inset-left));  bottom: calc(24px + env(safe-area-inset-bottom)); }
+      .t-jump  { right: calc(24px  + env(safe-area-inset-right)); bottom: calc(24px + env(safe-area-inset-bottom)); }
+      .t-scoop { right: calc(132px + env(safe-area-inset-right)); bottom: calc(24px + env(safe-area-inset-bottom)); }
       .t-scoop[hidden] { display: none; }
 
       /* Rotate-to-landscape prompt — only shown on portrait phones/tablets. */
