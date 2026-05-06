@@ -341,6 +341,7 @@ export function registerMenuScene() {
 
     onKeyPress('space', handleInput)
     onMousePress(handleInput)
+    onTouchStart(handleInput)
 
     // Headless screenshot path — bypass the prime-then-play flow entirely.
     if (typeof location !== 'undefined' && location.search.includes('autostart')) {
