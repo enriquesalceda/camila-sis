@@ -305,6 +305,7 @@ export function registerLevel1Scene() {
       if (target === shell) return
       if (target.is && target.is('kicked-shell')) return
       destroy(target)
+      destroy(shell)
       play('stomp')
     })
 
