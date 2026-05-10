@@ -304,10 +304,62 @@ export function registerLevel1Scene() {
     onCollide('kicked-shell', 'enemy', (shell, target) => {
       if (target === shell) return
       if (target.is && target.is('kicked-shell')) return
+      spawnSpiderPuff(shell.pos.x, shell.pos.y - 8)
       destroy(target)
       destroy(shell)
       play('stomp')
     })
+
+    // Funny "punted spider" effect: the rolled-up shell spins up into the air
+    // and arcs back down while a star burst pops outward. Both clean up via
+    // lifespan so we never leak entities.
+    function spawnSpiderPuff(x, y) {
+      const corpse = add([
+        sprite('insect', { width: TILE - 4, height: TILE - 8 }),
+        pos(x, y),
+        anchor('center'),
+        rotate(0),
+        opacity(1),
+        z(50),
+        lifespan(0.9, { fade: 0.4 }),
+      ])
+      corpse.frame = 3              // rolled-up "kicked" frame
+      const cvx  = rand(-80, 80)
+      let   cvy  = -300             // initial upward kick
+      const cspin = rand(540, 900) * (rand() < 0.5 ? -1 : 1)  // deg/sec
+      corpse.onUpdate(() => {
+        cvy += 1100 * dt()          // gravity pulls the corpse back down
+        corpse.pos.x += cvx * dt()
+        corpse.pos.y += cvy * dt()
+        corpse.angle += cspin * dt()
+      })
+
+      // Six little stars flying out radially from the impact point.
+      for (let i = 0; i < 6; i++) {
+        const ang = (i / 6) * Math.PI * 2 + rand(-0.3, 0.3)
+        const speed = rand(140, 220)
+        const s = add([
+          sprite('title-sparkle'),
+          pos(x, y),
+          anchor('center'),
+          rotate(0),
+          scale(rand(1.4, 2.2)),
+          opacity(1),
+          z(51),
+          lifespan(0.6, { fade: 0.3 }),
+        ])
+        s.play('twinkle')
+        const svx = Math.cos(ang) * speed
+        let   svy = Math.sin(ang) * speed - 60
+        const sspin = rand(-720, 720)
+        s.onUpdate(() => {
+          svy += 700 * dt()
+          s.pos.x += svx * dt()
+          s.pos.y += svy * dt()
+          s.angle += sspin * dt()
+        })
+      }
+    }
 
     function damagePlayer(p) {
       if (p.state === 'tall') {
