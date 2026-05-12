@@ -301,8 +301,14 @@ export function registerMenuScene() {
       cta.opacity = 0.75 + 0.25 * Math.sin(time() * Math.PI * 2)
     })
 
+    // Match touch.js so the instructions line up with what the player will
+    // actually see — on-screen buttons on iPad, keyboard hints everywhere else.
+    const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0
+    const instructions = isTouchDevice
+      ? 'Tap the on-screen buttons to move, jump, and throw ice cream.'
+      : 'Arrows to move. Space to jump. Shift throws ice cream.'
     add([
-      text('Arrows + Space. Z, Enter or click throws ice cream.', { font: 'press', size: 10 }),
+      text(instructions, { font: 'press', size: 10 }),
       pos(width() / 2, height() - 40),
       anchor('center'),
       color(140, 90, 10),
